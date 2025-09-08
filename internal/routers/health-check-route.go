@@ -3,7 +3,7 @@ package routes
 import (
 	"fmt"
 	"os"
-	"pakornssn/7solution-challenge/pkg/httputil"
+	httputil "pakornssn/7solution-challenge/pkg/http-util"
 
 	"github.com/gin-gonic/gin"
 )

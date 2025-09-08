@@ -27,3 +27,15 @@ func CreateResponseModel[T any](data T, errCode string, errMessage string) BaseR
 	}
 	return res
 }
+
+type PaginationRequest struct {
+	ItemPerPage int64 `json:"itemPerPage"`
+	CurrentPage int64 `json:"currentPage"`
+}
+
+type Pagination struct {
+	ItemPerPage int64 `json:"itemPerPage"`
+	CurrentPage int64 `json:"currentPage"`
+	TotalPage   int64 `json:"totalPage"`
+	TotalItem   int64 `json:"totalItem"`
+}
