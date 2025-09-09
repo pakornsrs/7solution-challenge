@@ -30,6 +30,8 @@ var (
 	UserAlreeadyExistError     = CustomError{Code: "Error-0004", Message: "This e-main has been registed"}
 	BadRequestError            = CustomError{Code: "Error-0005", Message: "Bad request"}
 	ValidateRequestError       = CustomError{Code: "Error-0006", Message: "Validate request error"}
+	UserNotFoundError          = CustomError{Code: "Error-0007", Message: "Not found user"}
+	UnauthorizedRequestError   = CustomError{Code: "Error-0008", Message: "Unauthorized request"}
 
 	UnknownError = CustomError{Code: "Error-9999", Message: "Unknow error"}
 )

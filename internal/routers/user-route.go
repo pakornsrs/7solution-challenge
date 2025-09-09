@@ -1,15 +1,19 @@
 package routes
 
 import (
-	"fmt"
 	"pakornssn/7solution-challenge/internal/handlers"
+	"pakornssn/7solution-challenge/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SetupUserServiceRoute(router *gin.Engine, userHandler handlers.IUserHandler) {
 
-	base := "/api/user"
+	publicPath := router.Group("/api/user")
 
-	router.POST(fmt.Sprintf("%s/register", base), userHandler.Register)
+	securePath := publicPath.Group("/")
+	securePath.Use(middleware.ValidateToken())
+
+	publicPath.POST("/register", userHandler.Register)
+	securePath.GET("/:userid", userHandler.GetUserById)
 }

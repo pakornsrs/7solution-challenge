@@ -5,6 +5,8 @@ import (
 	"pakornssn/7solution-challenge/internal/models"
 	"regexp"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ValidateResult struct {
@@ -46,6 +48,18 @@ func AuthenticationUserRequestValidator(request models.AuthUserRequest) Validate
 
 	if len(strings.TrimSpace(request.Password)) < 8 {
 		return ValidateResult{IsPass: false, ErrorDetail: errors.New("password must not be empty and length must greater than 8 digit")}
+	}
+
+	return ValidateResult{IsPass: true}
+}
+
+func ValidateUserId(request string) ValidateResult {
+	if len(strings.TrimSpace(request)) == 0 {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("userId must not be empty")}
+	}
+
+	if _, err := primitive.ObjectIDFromHex(request); err != nil {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("userId format incorrect")}
 	}
 
 	return ValidateResult{IsPass: true}

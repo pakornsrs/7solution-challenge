@@ -7,10 +7,13 @@ import (
 	"pakornssn/7solution-challenge/internal/repositories"
 	errorutil "pakornssn/7solution-challenge/pkg/error-util"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IUserService interface {
 	Register(ctx context.Context, request models.CreateUserRequest) (models.UserResponse, error)
+	GetUserById(ctx context.Context, userId string) (models.UserResponse, error)
 }
 
 type userService struct {
@@ -46,10 +49,31 @@ func (service *userService) Register(ctx context.Context, request models.CreateU
 		return models.UserResponse{}, err
 	}
 
+	userDb.Id = primitive.NewObjectID()
+
 	err = service.userRepository.CreateUser(ctx, userDb)
 	if err != nil {
 		return models.UserResponse{}, err
 	}
 
 	return userDb.ToUserResponse(), nil
+}
+
+func (service *userService) GetUserById(ctx context.Context, userId string) (models.UserResponse, error) {
+
+	filter := models.GetUserFilterRequest{
+		UserId: userId,
+	}
+
+	users, _, err := service.userRepository.FindUser(ctx, filter)
+	if err != nil {
+		return models.UserResponse{}, err
+	}
+
+	if len(users) == 0 {
+		errorResp := errorutil.GetServerErrorResponse(404, nil, &constants.UserNotFoundError)
+		return models.UserResponse{}, &errorResp
+	}
+
+	return users[0].ToUserResponse(), nil
 }

@@ -8,6 +8,7 @@ import (
 	"pakornssn/7solution-challenge/internal/validators"
 	errorutil "pakornssn/7solution-challenge/pkg/error-util"
 	httputil "pakornssn/7solution-challenge/pkg/http-util"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 
 type IUserHandler interface {
 	Register(gin *gin.Context)
+	GetUserById(gin *gin.Context)
 }
 
 type userHandler struct {
@@ -36,7 +38,6 @@ func (handler *userHandler) Register(gin *gin.Context) {
 	}
 
 	validateResult := validators.CreateUserRequestValidator(request)
-
 	if !validateResult.IsPass {
 		errResp := errorutil.GetServerErrorResponse(422, validateResult.ErrorDetail, &constants.ValidateRequestError)
 		httputil.HttpErrorResponse(gin, &errResp)
@@ -47,6 +48,28 @@ func (handler *userHandler) Register(gin *gin.Context) {
 	defer cancel()
 
 	resp, err := handler.userService.Register(ctx, request)
+	if err != nil {
+		httputil.HttpErrorResponse(gin, err)
+		return
+	}
+
+	httputil.HttpSuccessResponse(gin, resp)
+}
+
+func (handler *userHandler) GetUserById(gin *gin.Context) {
+	userId := strings.TrimSpace(gin.Param("userid"))
+
+	validateResult := validators.ValidateUserId(userId)
+	if !validateResult.IsPass {
+		errResp := errorutil.GetServerErrorResponse(422, validateResult.ErrorDetail, &constants.ValidateRequestError)
+		httputil.HttpErrorResponse(gin, &errResp)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := handler.userService.GetUserById(ctx, userId)
 	if err != nil {
 		httputil.HttpErrorResponse(gin, err)
 		return
