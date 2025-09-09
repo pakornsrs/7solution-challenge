@@ -1,6 +1,10 @@
 # Service
 export PORT=8080
-export SECRET_KEY = e6d8a47947531b759a51458e150c909d
+
+# JWT
+export JWT_SECRET_KEY = aJm5+7P3tFbDqZHTq8gW4nqoxzWJ3i28bM6oW8Zz9Xg=
+export ISSUER = user-service
+export AUDIENCE = user-service-client
 
 # Health Check
 export ENV=dev
