@@ -20,11 +20,16 @@ func GetServerErrorResponse(statusCode int, originalError error, customError *co
 		customError = &constants.UnknownError
 	}
 
+	originalErrorMessage := ""
+	if originalError != nil {
+		originalErrorMessage = originalError.Error()
+	}
+
 	return ServiceError{
 		StatusCode:      statusCode,
 		ErrorCode:       customError.Code,
 		Message:         customError.Message,
-		OriginalMessage: originalError.Error(),
+		OriginalMessage: originalErrorMessage,
 	}
 }
 

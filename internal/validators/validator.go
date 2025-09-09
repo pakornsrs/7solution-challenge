@@ -33,3 +33,20 @@ func CreateUserRequestValidator(request models.CreateUserRequest) ValidateResult
 
 	return ValidateResult{IsPass: true}
 }
+
+func AuthenticationUserRequestValidator(request models.AuthUserRequest) ValidateResult {
+
+	if len(strings.TrimSpace(request.Email)) == 0 {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("email must not be empty")}
+	}
+
+	if !emailRe.MatchString(request.Email) {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("email format is incorrect")}
+	}
+
+	if len(strings.TrimSpace(request.Password)) < 8 {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("password must not be empty and length must greater than 8 digit")}
+	}
+
+	return ValidateResult{IsPass: true}
+}

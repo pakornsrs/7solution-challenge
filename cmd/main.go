@@ -35,11 +35,16 @@ func main() {
 
 	// implement service client
 	userRepositoryClient := repositories.NewUserRepository(mongoClient)
+
 	userServiceClient := services.NewUserService(userRepositoryClient)
+	authServiceClient := services.NewAuthenticationService(userRepositoryClient)
+
+	authUser := handlers.NewAuthenticationHandler(authServiceClient)
 	userHandler := handlers.NewUserHandler(userServiceClient)
 
 	// gRPC Client
 	routes.SetupServiceHealthCheckRoute(router)
+	routes.SetupAuthenticationServiceRoute(router, authUser)
 	routes.SetupUserServiceRoute(router, userHandler)
 
 	// Starting Service

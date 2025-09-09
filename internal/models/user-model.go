@@ -63,11 +63,6 @@ func (source *UpdateUserRequest) ToUpdateUserDb() (UpdateUserDb, error) {
 	}, nil
 }
 
-type AuthUserRequest struct {
-	Email    string `bson:"email"`
-	Password string `bson:"password"`
-}
-
 type CreateUserRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
