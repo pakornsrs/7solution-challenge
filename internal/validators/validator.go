@@ -4,6 +4,7 @@ import (
 	"errors"
 	"pakornssn/7solution-challenge/internal/models"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -63,4 +64,23 @@ func ValidateUserId(request string) ValidateResult {
 	}
 
 	return ValidateResult{IsPass: true}
+}
+
+func ValidatePagination(page string, item string) (ValidateResult, *models.PaginationRequest) {
+	currentPage, err := strconv.Atoi(page)
+	if err != nil {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("current page format is incorrect")}, nil
+	}
+
+	itemPerPage, err := strconv.Atoi(item)
+	if err != nil {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("item per page format is incorrect")}, nil
+	}
+
+	pagination := &models.PaginationRequest{
+		ItemPerPage: int64(itemPerPage),
+		CurrentPage: int64(currentPage),
+	}
+
+	return ValidateResult{IsPass: true}, pagination
 }

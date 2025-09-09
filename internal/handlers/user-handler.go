@@ -17,6 +17,7 @@ import (
 type IUserHandler interface {
 	Register(gin *gin.Context)
 	GetUserById(gin *gin.Context)
+	GetAllUser(gin *gin.Context)
 }
 
 type userHandler struct {
@@ -70,6 +71,36 @@ func (handler *userHandler) GetUserById(gin *gin.Context) {
 	defer cancel()
 
 	resp, err := handler.userService.GetUserById(ctx, userId)
+	if err != nil {
+		httputil.HttpErrorResponse(gin, err)
+		return
+	}
+
+	httputil.HttpSuccessResponse(gin, resp)
+}
+
+func (handler *userHandler) GetAllUser(gin *gin.Context) {
+	page := strings.TrimSpace(gin.Query("page"))
+	itemPerPage := strings.TrimSpace(gin.Query("itemperpage"))
+
+	var paginationRequest *models.PaginationRequest
+	if len(page) > 0 && len(itemPerPage) > 0 {
+		validateResult, pagination := validators.ValidatePagination(page, itemPerPage)
+		if !validateResult.IsPass {
+			errResp := errorutil.GetServerErrorResponse(422, validateResult.ErrorDetail, &constants.ValidateRequestError)
+			httputil.HttpErrorResponse(gin, &errResp)
+			return
+		}
+		paginationRequest = pagination
+	} else {
+		// no pagination
+		paginationRequest = nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := handler.userService.GetAllUser(ctx, paginationRequest)
 	if err != nil {
 		httputil.HttpErrorResponse(gin, err)
 		return

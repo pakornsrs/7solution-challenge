@@ -94,3 +94,8 @@ type UserResponse struct {
 	CreatedAt time.Time `bson:"createdAt"`
 	UpdatedAt time.Time `bson:"updatedAt"`
 }
+
+type GetAllUserResponse struct {
+	List       []UserResponse `json:"list"`
+	Pagination Pagination     `json:"pagination"`
+}

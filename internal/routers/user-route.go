@@ -16,4 +16,5 @@ func SetupUserServiceRoute(router *gin.Engine, userHandler handlers.IUserHandler
 
 	publicPath.POST("/register", userHandler.Register)
 	securePath.GET("/:userid", userHandler.GetUserById)
+	securePath.GET("/all", userHandler.GetAllUser)
 }

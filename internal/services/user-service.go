@@ -14,6 +14,7 @@ import (
 type IUserService interface {
 	Register(ctx context.Context, request models.CreateUserRequest) (models.UserResponse, error)
 	GetUserById(ctx context.Context, userId string) (models.UserResponse, error)
+	GetAllUser(ctx context.Context, pagination *models.PaginationRequest) (models.GetAllUserResponse, error)
 }
 
 type userService struct {
@@ -76,4 +77,30 @@ func (service *userService) GetUserById(ctx context.Context, userId string) (mod
 	}
 
 	return users[0].ToUserResponse(), nil
+}
+
+func (service *userService) GetAllUser(ctx context.Context, pagination *models.PaginationRequest) (models.GetAllUserResponse, error) {
+
+	filter := models.GetUserFilterRequest{}
+
+	if pagination != nil {
+		filter.Pagination = pagination
+	}
+
+	users, paginationResp, err := service.userRepository.FindUser(ctx, filter)
+	if err != nil {
+		return models.GetAllUserResponse{}, err
+	}
+
+	listUser := []models.UserResponse{}
+	for _, user := range users {
+		listUser = append(listUser, user.ToUserResponse())
+	}
+
+	resp := models.GetAllUserResponse{
+		List:       listUser,
+		Pagination: paginationResp,
+	}
+
+	return resp, nil
 }

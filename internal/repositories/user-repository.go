@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"math"
 	"pakornssn/7solution-challenge/internal/constants"
 	"pakornssn/7solution-challenge/internal/models"
 	errorutil "pakornssn/7solution-challenge/pkg/error-util"
@@ -17,7 +19,7 @@ import (
 
 type IUserRepository interface {
 	CreateUser(ctx context.Context, user models.UserDB) error
-	FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, int, error)
+	FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, models.Pagination, error)
 	UpdateUser(ctx context.Context, req models.UpdateUserDb) error
 	DeleteUser(ctx context.Context, userId primitive.ObjectID) error
 }
@@ -47,53 +49,49 @@ func (repo *userRepository) CreateUser(ctx context.Context, user models.UserDB) 
 	return nil
 }
 
-func (repo *userRepository) FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, int, error) {
+func (repo *userRepository) FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, models.Pagination, error) {
 
-	filter, err := buildFindUserFilter(req)
+	result := []models.UserDB{}
+	pagination := models.Pagination{}
+
+	filter, err := repo.buildFindUserFilter(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, pagination, err
 	}
 
 	findOpts := &options.FindOptions{}
 	if req.Pagination != nil {
-		skip := (req.Pagination.CurrentPage - 1) * req.Pagination.ItemPerPage
-
-		findOpts = options.Find().
-			SetSkip(skip).
-			SetLimit(req.Pagination.ItemPerPage).
-			SetSort(bson.D{
-				{
-					Key:   "createdAt",
-					Value: -1,
-				},
-			})
+		findOpts, pagination, err = repo.buildPaginationOption(ctx, filter, *req.Pagination)
+		if err != nil {
+			return nil, pagination, err
+		}
 	}
 
 	cur, err := repo.mongoCollection.Find(ctx, filter, findOpts)
 	if err != nil {
 		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
-		return nil, 0, &respError
+		return nil, pagination, &respError
 	}
 
-	result := []models.UserDB{}
 	if err := cur.All(ctx, &result); err != nil {
-		return nil, 0, err
+		return nil, pagination, err
 	}
 
-	totalItems := len(result)
-	if req.Pagination != nil && len(result) > 0 {
-		total, err := repo.mongoCollection.CountDocuments(ctx, filter)
-		if err != nil {
-			respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
-			return nil, 0, &respError
+	// default pagination
+	if req.Pagination == nil {
+		itemsCount := len(result)
+		pagination = models.Pagination{
+			ItemPerPage: int64(itemsCount),
+			CurrentPage: 1,
+			TotalPage:   1,
+			TotalItem:   int64(itemsCount),
 		}
-		totalItems = int(total)
 	}
 
-	return result, totalItems, nil
+	return result, pagination, nil
 }
 
-func buildFindUserFilter(req models.GetUserFilterRequest) (bson.M, error) {
+func (repo *userRepository) buildFindUserFilter(req models.GetUserFilterRequest) (bson.M, error) {
 	filters := []bson.M{}
 
 	if len(req.UserId) > 0 {
@@ -121,7 +119,49 @@ func buildFindUserFilter(req models.GetUserFilterRequest) (bson.M, error) {
 		filters = append(filters, filter)
 	}
 
+	if len(filters) == 0 {
+		return bson.M{}, nil
+	}
+
 	return bson.M{"$and": filters}, nil
+}
+
+func (repo *userRepository) buildPaginationOption(ctx context.Context, filter bson.M, pagination models.PaginationRequest) (*options.FindOptions, models.Pagination, error) {
+
+	total, err := repo.mongoCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
+		return nil, models.Pagination{}, &respError
+	}
+
+	totalItems := int(total)
+	totalPage := math.Ceil(float64(totalItems) / float64(pagination.ItemPerPage))
+
+	if totalPage < float64(pagination.CurrentPage) {
+		respError := errorutil.GetServerErrorResponse(400, errors.New("current page not over total page"), &constants.BadRequestError)
+		return nil, models.Pagination{}, &respError
+	}
+
+	skip := (pagination.CurrentPage - 1) * pagination.ItemPerPage
+
+	findOpts := options.Find().
+		SetSkip(skip).
+		SetLimit(pagination.ItemPerPage).
+		SetSort(bson.D{
+			{
+				Key:   "createdAt",
+				Value: -1,
+			},
+		})
+
+	paginationResp := models.Pagination{
+		ItemPerPage: pagination.ItemPerPage,
+		CurrentPage: pagination.CurrentPage,
+		TotalPage:   int64(totalPage),
+		TotalItem:   int64(totalItems),
+	}
+
+	return findOpts, paginationResp, nil
 }
 
 func (repo *userRepository) UpdateUser(ctx context.Context, req models.UpdateUserDb) error {

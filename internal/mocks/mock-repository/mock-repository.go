@@ -19,7 +19,7 @@ func (mock *MockUserRepository) CreateUser(ctx context.Context, request models.U
 	return res0
 }
 
-func (mock *MockUserRepository) FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, int, error) {
+func (mock *MockUserRepository) FindUser(ctx context.Context, req models.GetUserFilterRequest) ([]models.UserDB, models.Pagination, error) {
 	result := mock.Called(ctx, req)
 
 	var res0 []models.UserDB
@@ -27,12 +27,12 @@ func (mock *MockUserRepository) FindUser(ctx context.Context, req models.GetUser
 		res0 = val0
 	}
 
-	var res1 int
-	if val1, pass := result.Get(0).(int); pass {
+	var res1 models.Pagination
+	if val1, pass := result.Get(1).(models.Pagination); pass {
 		res1 = val1
 	}
 
-	res2 := result.Error(1)
+	res2 := result.Error(2)
 	return res0, res1, res2
 }
 
