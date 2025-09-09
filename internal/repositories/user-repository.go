@@ -180,7 +180,7 @@ func (repo *userRepository) UpdateUser(ctx context.Context, req models.UpdateUse
 
 	updated["updatedAt"] = time.Now()
 
-	_, err := repo.mongoCollection.UpdateOne(ctx, filter, updated)
+	_, err := repo.mongoCollection.UpdateOne(ctx, filter, bson.M{"$set": updated})
 	if err != nil {
 		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 		return &respError

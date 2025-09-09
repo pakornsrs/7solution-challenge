@@ -99,3 +99,7 @@ type GetAllUserResponse struct {
 	List       []UserResponse `json:"list"`
 	Pagination Pagination     `json:"pagination"`
 }
+
+type UpdateUserResponse struct {
+	UpdatedUser UserResponse `json:"updatedUser"`
+}

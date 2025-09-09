@@ -84,3 +84,28 @@ func ValidatePagination(page string, item string) (ValidateResult, *models.Pagin
 
 	return ValidateResult{IsPass: true}, pagination
 }
+
+func UpdateUserRequestValidator(request models.UpdateUserRequest) ValidateResult {
+	if len(request.UpdatedName) != 0 {
+		// prevent white space
+		if len(strings.TrimSpace(request.UpdatedName)) == 0 {
+			return ValidateResult{IsPass: false, ErrorDetail: errors.New("updated name must not be with space")}
+		}
+	}
+
+	if len(strings.TrimSpace(request.UpdatedEmail)) != 0 {
+		if !emailRe.MatchString(request.UpdatedEmail) {
+			return ValidateResult{IsPass: false, ErrorDetail: errors.New("updated email format is incorrect")}
+		}
+	}
+
+	if len(strings.TrimSpace(request.UserId)) == 0 {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("userId must not be empty")}
+	}
+
+	if _, err := primitive.ObjectIDFromHex(request.UserId); err != nil {
+		return ValidateResult{IsPass: false, ErrorDetail: errors.New("userId format incorrect")}
+	}
+
+	return ValidateResult{IsPass: true}
+}

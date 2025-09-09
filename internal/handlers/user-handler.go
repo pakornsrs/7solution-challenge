@@ -18,6 +18,7 @@ type IUserHandler interface {
 	Register(gin *gin.Context)
 	GetUserById(gin *gin.Context)
 	GetAllUser(gin *gin.Context)
+	UpdateUser(gin *gin.Context)
 }
 
 type userHandler struct {
@@ -101,6 +102,33 @@ func (handler *userHandler) GetAllUser(gin *gin.Context) {
 	defer cancel()
 
 	resp, err := handler.userService.GetAllUser(ctx, paginationRequest)
+	if err != nil {
+		httputil.HttpErrorResponse(gin, err)
+		return
+	}
+
+	httputil.HttpSuccessResponse(gin, resp)
+}
+
+func (handler *userHandler) UpdateUser(gin *gin.Context) {
+	request := models.UpdateUserRequest{}
+
+	if err := gin.ShouldBindJSON(&request); err != nil {
+		httputil.HttpBadRequestResponse(gin, constants.BadRequestError.Message, err.Error())
+		return
+	}
+
+	validateResult := validators.UpdateUserRequestValidator(request)
+	if !validateResult.IsPass {
+		errResp := errorutil.GetServerErrorResponse(422, validateResult.ErrorDetail, &constants.ValidateRequestError)
+		httputil.HttpErrorResponse(gin, &errResp)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := handler.userService.UpdateUser(ctx, request)
 	if err != nil {
 		httputil.HttpErrorResponse(gin, err)
 		return

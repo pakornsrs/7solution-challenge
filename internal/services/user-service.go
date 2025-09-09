@@ -15,6 +15,7 @@ type IUserService interface {
 	Register(ctx context.Context, request models.CreateUserRequest) (models.UserResponse, error)
 	GetUserById(ctx context.Context, userId string) (models.UserResponse, error)
 	GetAllUser(ctx context.Context, pagination *models.PaginationRequest) (models.GetAllUserResponse, error)
+	UpdateUser(ctx context.Context, request models.UpdateUserRequest) (models.UpdateUserResponse, error)
 }
 
 type userService struct {
@@ -103,4 +104,42 @@ func (service *userService) GetAllUser(ctx context.Context, pagination *models.P
 	}
 
 	return resp, nil
+}
+
+func (service *userService) UpdateUser(ctx context.Context, request models.UpdateUserRequest) (models.UpdateUserResponse, error) {
+
+	// check existed
+	if len(request.UpdatedEmail) > 0 {
+		filter := models.GetUserFilterRequest{
+			Email: strings.TrimSpace(request.UpdatedEmail),
+		}
+
+		user, _, err := service.userRepository.FindUser(ctx, filter)
+		if err != nil {
+			return models.UpdateUserResponse{}, err
+		}
+
+		if len(user) > 0 {
+			errorResp := errorutil.GetConflictError(&constants.UserAlreeadyExistError)
+			return models.UpdateUserResponse{}, &errorResp
+		}
+	}
+
+	// update user
+	updatedRequest, err := request.ToUpdateUserDb()
+	if err != nil {
+		return models.UpdateUserResponse{}, err
+	}
+	err = service.userRepository.UpdateUser(ctx, updatedRequest)
+	if err != nil {
+		return models.UpdateUserResponse{}, err
+	}
+
+	// get updated user
+	user, err := service.GetUserById(ctx, request.UserId)
+	if err != nil {
+		return models.UpdateUserResponse{}, err
+	}
+
+	return models.UpdateUserResponse{UpdatedUser: user}, nil
 }
