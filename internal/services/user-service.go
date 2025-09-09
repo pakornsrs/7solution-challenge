@@ -16,6 +16,7 @@ type IUserService interface {
 	GetUserById(ctx context.Context, userId string) (models.UserResponse, error)
 	GetAllUser(ctx context.Context, pagination *models.PaginationRequest) (models.GetAllUserResponse, error)
 	UpdateUser(ctx context.Context, request models.UpdateUserRequest) (models.UpdateUserResponse, error)
+	DeleteUser(ctx context.Context, userId string) error
 }
 
 type userService struct {
@@ -142,4 +143,35 @@ func (service *userService) UpdateUser(ctx context.Context, request models.Updat
 	}
 
 	return models.UpdateUserResponse{UpdatedUser: user}, nil
+}
+
+func (service *userService) DeleteUser(ctx context.Context, userId string) error {
+	// check existed
+	filter := models.GetUserFilterRequest{
+		UserId: strings.TrimSpace(userId),
+	}
+
+	user, _, err := service.userRepository.FindUser(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if len(user) == 0 {
+		errorResp := errorutil.GetServerErrorResponse(404, nil, &constants.UserNotFoundError)
+		return &errorResp
+	}
+
+	// delete user
+	primitiveId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.UserIdFormatIncorrectError)
+		return &respError
+	}
+
+	err = service.userRepository.DeleteUser(ctx, primitiveId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

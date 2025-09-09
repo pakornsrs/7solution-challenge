@@ -19,6 +19,7 @@ type IUserHandler interface {
 	GetUserById(gin *gin.Context)
 	GetAllUser(gin *gin.Context)
 	UpdateUser(gin *gin.Context)
+	DeleteUser(gin *gin.Context)
 }
 
 type userHandler struct {
@@ -135,4 +136,26 @@ func (handler *userHandler) UpdateUser(gin *gin.Context) {
 	}
 
 	httputil.HttpSuccessResponse(gin, resp)
+}
+
+func (handler *userHandler) DeleteUser(gin *gin.Context) {
+	userId := strings.TrimSpace(gin.Param("userid"))
+
+	validateResult := validators.ValidateUserId(userId)
+	if !validateResult.IsPass {
+		errResp := errorutil.GetServerErrorResponse(422, validateResult.ErrorDetail, &constants.ValidateRequestError)
+		httputil.HttpErrorResponse(gin, &errResp)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := handler.userService.DeleteUser(ctx, userId)
+	if err != nil {
+		httputil.HttpErrorResponse(gin, err)
+		return
+	}
+
+	httputil.HttpSuccessResponse(gin, nil)
 }

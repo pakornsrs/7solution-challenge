@@ -18,4 +18,5 @@ func SetupUserServiceRoute(router *gin.Engine, userHandler handlers.IUserHandler
 	securePath.GET("/:userid", userHandler.GetUserById)
 	securePath.GET("/all", userHandler.GetAllUser)
 	securePath.PUT("/update", userHandler.UpdateUser)
+	securePath.DELETE("/:userid", userHandler.DeleteUser)
 }
