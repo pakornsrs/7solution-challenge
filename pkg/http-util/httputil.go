@@ -4,37 +4,34 @@ import (
 	"net/http"
 	"pakornssn/7solution-challenge/internal/constants"
 	"pakornssn/7solution-challenge/internal/models"
+	errorutil "pakornssn/7solution-challenge/pkg/error-util"
 
 	"github.com/gin-gonic/gin"
 )
 
-func ResponseSuccessStatusWithBody[T any](gin *gin.Context, resp T) {
-	gin.JSON(
-		http.StatusOK,
-		models.CreateSuccessResponseModel(
-			resp,
-		),
-	)
+func HttpSuccessResponse(gin *gin.Context, resp interface{}) {
+	gin.JSON(http.StatusOK, models.CreateResponseModel(resp, constants.SuccessCode, constants.SuccessMessage, constants.SuccessMessage))
 }
 
-func ResponseBadRequest[T any](gin *gin.Context, resp T) {
-	gin.JSON(
-		http.StatusBadRequest,
-		models.CreateResponseModel(
-			resp,
-			constants.BadRequestErrorCode,
-			constants.BadRequestErrorMessage,
-		),
-	)
+func HttpErrorResponse(gin *gin.Context, errorDetail error) {
+	var resp interface{}
+	httpStatus := http.StatusInternalServerError
+	errorCode := constants.InternalProcessFailedErrorCode
+	errorMessage := ""
+	originalErrorMessage := ""
+
+	if appErr, ok := errorDetail.(*errorutil.ServiceError); ok {
+		httpStatus = appErr.StatusCode
+		errorCode = appErr.ErrorCode
+		errorMessage = appErr.Message
+		originalErrorMessage = appErr.OriginalMessage
+	} else {
+		errorMessage = errorDetail.Error()
+	}
+
+	gin.JSON(httpStatus, models.CreateResponseModel(resp, errorCode, errorMessage, originalErrorMessage))
 }
 
-func ResponseServiceInternalError[T any](gin *gin.Context, resp T) {
-	gin.JSON(
-		http.StatusInternalServerError,
-		models.CreateResponseModel(
-			resp,
-			constants.InternalProcessFailedErrorCode,
-			constants.InternalProcessFailedErrorMessage,
-		),
-	)
+func HttpBadRequestResponse(gin *gin.Context, message, orriginalMessage string) {
+	gin.JSON(http.StatusBadRequest, models.CreateResponseModel[any](nil, constants.BadRequestErrorCode, message, orriginalMessage))
 }

@@ -1,31 +1,22 @@
 package models
 
 type BaseResponse[T any] struct {
-	Data         T      `json:"data"`
-	ErrorCode    string `json:"errorCode"`
-	ErrorMessage string `json:"errorMessage"`
-	Error        bool   `json:"error"`
+	Data                 T      `json:"data"`
+	IsError              bool   `json:"isError"`
+	ErrorCode            string `json:"errorCode"`
+	ErrorMessage         string `json:"message"`
+	OriginalErrorMessage string `json:"originalMessage"`
 }
 
-func CreateSuccessResponseModel[T any](data T) BaseResponse[T] {
-	res := BaseResponse[T]{
-		Data:         data,
-		Error:        false,
-		ErrorCode:    "0000",
-		ErrorMessage: "success",
-	}
-	return res
-}
-
-func CreateResponseModel[T any](data T, errCode string, errMessage string) BaseResponse[T] {
+func CreateResponseModel[T any](data T, errCode string, errMessage string, originalErrorMessage string) BaseResponse[T] {
 	isError := errCode != "0000"
-	res := BaseResponse[T]{
-		Data:         data,
-		Error:        isError,
-		ErrorCode:    errCode,
-		ErrorMessage: errMessage,
+	return BaseResponse[T]{
+		Data:                 data,
+		IsError:              isError,
+		ErrorCode:            errCode,
+		ErrorMessage:         errMessage,
+		OriginalErrorMessage: originalErrorMessage,
 	}
-	return res
 }
 
 type PaginationRequest struct {

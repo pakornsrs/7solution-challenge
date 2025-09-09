@@ -6,7 +6,10 @@ import (
 	"log"
 	"os"
 	"pakornssn/7solution-challenge/configs"
+	"pakornssn/7solution-challenge/internal/handlers"
+	"pakornssn/7solution-challenge/internal/repositories"
 	routes "pakornssn/7solution-challenge/internal/routers"
+	"pakornssn/7solution-challenge/internal/services"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -30,8 +33,14 @@ func main() {
 		log.Fatalf("MongoDB connection failed (ping): %v", err)
 	}
 
+	// implement service client
+	userRepositoryClient := repositories.NewUserRepository(mongoClient)
+	userServiceClient := services.NewUserService(userRepositoryClient)
+	userHandler := handlers.NewUserHandler(userServiceClient)
+
 	// gRPC Client
 	routes.SetupServiceHealthCheckRoute(router)
+	routes.SetupUserServiceRoute(router, userHandler)
 
 	// Starting Service
 	port := os.Getenv("PORT")

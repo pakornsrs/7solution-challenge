@@ -15,14 +15,27 @@ func (e *ServiceError) Error() string {
 	return e.Message
 }
 
-func GetInternalServerError(originalError error, customError *constants.CustomError) ServiceError {
+func GetServerErrorResponse(statusCode int, originalError error, customError *constants.CustomError) ServiceError {
+	if customError == nil {
+		customError = &constants.UnknownError
+	}
+
+	return ServiceError{
+		StatusCode:      statusCode,
+		ErrorCode:       customError.Code,
+		Message:         customError.Message,
+		OriginalMessage: originalError.Error(),
+	}
+}
+
+func GetConflictError(customError *constants.CustomError) ServiceError {
 	if customError == nil {
 		customError = &constants.UnknownError
 	}
 	return ServiceError{
-		StatusCode:      500,
+		StatusCode:      409,
 		ErrorCode:       customError.Code,
 		Message:         customError.Message,
-		OriginalMessage: originalError.Error(),
+		OriginalMessage: "",
 	}
 }

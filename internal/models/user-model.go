@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserDB struct {
@@ -15,6 +16,16 @@ type UserDB struct {
 	Password  string             `bson:"password"`
 	CreatedAt time.Time          `bson:"createdAt"`
 	UpdatedAt time.Time          `bson:"updatedAt"`
+}
+
+func (source *UserDB) ToUserResponse() UserResponse {
+	return UserResponse{
+		UserId:    source.Id.Hex(),
+		Name:      source.Name,
+		Email:     source.Email,
+		CreatedAt: source.CreatedAt,
+		UpdatedAt: source.UpdatedAt,
+	}
 }
 
 type GetUserFilterRequest struct {
@@ -40,7 +51,7 @@ type UpdateUserRequest struct {
 func (source *UpdateUserRequest) ToUpdateUserDb() (UpdateUserDb, error) {
 	id, err := primitive.ObjectIDFromHex(source.UserId)
 	if err != nil {
-		errorResp := errorutil.GetInternalServerError(err, &constants.UserIdFormatIncorrectError)
+		errorResp := errorutil.GetServerErrorResponse(500, err, &constants.UserIdFormatIncorrectError)
 		return UpdateUserDb{}, &errorResp
 	}
 
@@ -55,4 +66,36 @@ func (source *UpdateUserRequest) ToUpdateUserDb() (UpdateUserDb, error) {
 type AuthUserRequest struct {
 	Email    string `bson:"email"`
 	Password string `bson:"password"`
+}
+
+type CreateUserRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (source *CreateUserRequest) ToUserDb() (UserDB, error) {
+	password, err := bcrypt.GenerateFromPassword([]byte(source.Password), bcrypt.DefaultCost)
+	if err != nil {
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.UnknownError)
+		return UserDB{}, &respError
+	}
+
+	currentTime := time.Now()
+
+	return UserDB{
+		Name:      source.Name,
+		Email:     source.Email,
+		Password:  string(password),
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
+	}, nil
+}
+
+type UserResponse struct {
+	UserId    string    `json:"userId"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `bson:"createdAt"`
+	UpdatedAt time.Time `bson:"updatedAt"`
 }

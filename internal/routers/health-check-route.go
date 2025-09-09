@@ -10,7 +10,7 @@ import (
 
 func SetupServiceHealthCheckRoute(router *gin.Engine) {
 
-	base := "/api/user"
+	base := "/api"
 
 	router.GET(fmt.Sprintf("%s/health-check", base), healthCheck)
 }
@@ -20,7 +20,7 @@ func healthCheck(c *gin.Context) {
 		Environment: os.Getenv("ENV"),
 		Version:     os.Getenv("VERSION"),
 	}
-	httputil.ResponseSuccessStatusWithBody(c, resp)
+	httputil.HttpSuccessResponse(c, resp)
 }
 
 type healthCheckResponse struct {

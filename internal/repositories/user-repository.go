@@ -40,7 +40,7 @@ func (repo *userRepository) CreateUser(ctx context.Context, user models.UserDB) 
 
 	_, err := repo.mongoCollection.InsertOne(ctx, user)
 	if err != nil {
-		respError := errorutil.GetInternalServerError(err, &constants.MongoDbError)
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 		return &respError
 	}
 
@@ -71,7 +71,7 @@ func (repo *userRepository) FindUser(ctx context.Context, req models.GetUserFilt
 
 	cur, err := repo.mongoCollection.Find(ctx, filter, findOpts)
 	if err != nil {
-		respError := errorutil.GetInternalServerError(err, &constants.MongoDbError)
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 		return nil, 0, &respError
 	}
 
@@ -84,7 +84,7 @@ func (repo *userRepository) FindUser(ctx context.Context, req models.GetUserFilt
 	if req.Pagination != nil && len(result) > 0 {
 		total, err := repo.mongoCollection.CountDocuments(ctx, filter)
 		if err != nil {
-			respError := errorutil.GetInternalServerError(err, &constants.MongoDbError)
+			respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 			return nil, 0, &respError
 		}
 		totalItems = int(total)
@@ -99,7 +99,7 @@ func buildFindUserFilter(req models.GetUserFilterRequest) (bson.M, error) {
 	if len(req.UserId) > 0 {
 		id, err := primitive.ObjectIDFromHex(req.UserId)
 		if err != nil {
-			respError := errorutil.GetInternalServerError(err, &constants.UserIdFormatIncorrectError)
+			respError := errorutil.GetServerErrorResponse(500, err, &constants.UserIdFormatIncorrectError)
 			return nil, &respError
 		}
 		filter := bson.M{
@@ -142,7 +142,7 @@ func (repo *userRepository) UpdateUser(ctx context.Context, req models.UpdateUse
 
 	_, err := repo.mongoCollection.UpdateOne(ctx, filter, updated)
 	if err != nil {
-		respError := errorutil.GetInternalServerError(err, &constants.MongoDbError)
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 		return &respError
 	}
 
@@ -155,7 +155,7 @@ func (repo *userRepository) DeleteUser(ctx context.Context, userId primitive.Obj
 
 	_, err := repo.mongoCollection.DeleteOne(ctx, filter)
 	if err != nil {
-		respError := errorutil.GetInternalServerError(err, &constants.MongoDbError)
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.MongoDbError)
 		return &respError
 	}
 
