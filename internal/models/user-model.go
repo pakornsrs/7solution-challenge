@@ -2,11 +2,12 @@ package models
 
 import (
 	"pakornssn/7solution-challenge/internal/constants"
+	authutil "pakornssn/7solution-challenge/pkg/auth-util"
 	errorutil "pakornssn/7solution-challenge/pkg/error-util"
+	timeutil "pakornssn/7solution-challenge/pkg/time-util"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserDB struct {
@@ -70,13 +71,12 @@ type CreateUserRequest struct {
 }
 
 func (source *CreateUserRequest) ToUserDb() (UserDB, error) {
-	password, err := bcrypt.GenerateFromPassword([]byte(source.Password), bcrypt.DefaultCost)
+	password, err := authutil.EncryptPassword(source.Password)
 	if err != nil {
-		respError := errorutil.GetServerErrorResponse(500, err, &constants.UnknownError)
-		return UserDB{}, &respError
+		return UserDB{}, err
 	}
 
-	currentTime := time.Now()
+	currentTime := timeutil.TimeNowUte()
 
 	return UserDB{
 		Name:      source.Name,

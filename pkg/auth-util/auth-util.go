@@ -5,14 +5,24 @@ import (
 	"encoding/base64"
 	"errors"
 	"os"
+	"pakornssn/7solution-challenge/internal/constants"
+	errorutil "pakornssn/7solution-challenge/pkg/error-util"
+	timeutil "pakornssn/7solution-challenge/pkg/time-util"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var utcNow = func() time.Time {
-	return time.Now().UTC()
+var EncryptPassword = func(password string) (string, error) {
+	encryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		respError := errorutil.GetServerErrorResponse(500, err, &constants.UnknownError)
+		return "", &respError
+	}
+
+	return string(encryptPassword), nil
 }
 
 func GenerateAuthenticationToken(ctx context.Context, userID string, ttl time.Duration) (string, error) {
@@ -22,7 +32,7 @@ func GenerateAuthenticationToken(ctx context.Context, userID string, ttl time.Du
 	default:
 	}
 
-	now := utcNow()
+	now := timeutil.TimeNowUte()
 
 	claims := jwt.RegisteredClaims{
 		Issuer:    os.Getenv("ISSUER"),

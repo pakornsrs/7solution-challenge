@@ -3,6 +3,7 @@ package authutil
 import (
 	"context"
 	"os"
+	timeutil "pakornssn/7solution-challenge/pkg/time-util"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func TestGenerateAuthenticationToken(t *testing.T) {
 		os.Setenv("AUDIENCE", "user-service-client")
 
 		mockTimeUtc := time.Date(2030, 7, 25, 22, 58, 20, 0, time.UTC)
-		utcNow = func() time.Time {
+		timeutil.TimeNowUte = func() time.Time {
 			return mockTimeUtc
 		}
 

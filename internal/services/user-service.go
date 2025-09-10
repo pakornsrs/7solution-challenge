@@ -29,6 +29,10 @@ func NewUserService(userRepositoryClient repositories.IUserRepository) IUserServ
 	}
 }
 
+var newPrimitiveId = func() primitive.ObjectID {
+	return primitive.NewObjectID()
+}
+
 func (service *userService) Register(ctx context.Context, request models.CreateUserRequest) (models.UserResponse, error) {
 
 	// check existed
@@ -52,7 +56,7 @@ func (service *userService) Register(ctx context.Context, request models.CreateU
 		return models.UserResponse{}, err
 	}
 
-	userDb.Id = primitive.NewObjectID()
+	userDb.Id = newPrimitiveId()
 
 	err = service.userRepository.CreateUser(ctx, userDb)
 	if err != nil {
